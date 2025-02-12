@@ -5,7 +5,10 @@ const path = require('path');
 const bodyParser = require('body-parser');
 
 const app = express();
-const proxy = httpProxy.createProxyServer({});
+const proxy = httpProxy.createProxyServer({
+    changeOrigin: true,
+    secure: false
+});
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -15,7 +18,15 @@ app.get('/', (req, res) => {
 
 app.post('/browse', (req, res) => {
     const targetUrl = req.body.url;
-    proxy.web(req, res, { target: targetUrl }, (err) => {
+    const options = {
+        target: targetUrl,
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+        }
+    };
+    console.log(`Proxying request to: ${targetUrl}`);
+    proxy.web(req, res, options, (err) => {
+        console.error(`Error occurred while proxying request: ${err}`);
         res.status(500).send('Error occurred while proxying request');
     });
 });
