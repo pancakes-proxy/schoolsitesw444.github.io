@@ -7,15 +7,17 @@ const bodyParser = require('body-parser');
 const app = express();
 const proxy = httpProxy.createProxyServer({
     changeOrigin: true,
-    secure: false
+    secure: true // Enables verification of SSL certificates
 });
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Serve the HTML form for URL input
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Handle URL submissions and proxy requests
 app.post('/browse', (req, res) => {
     const targetUrl = req.body.url;
     const options = {
@@ -26,13 +28,17 @@ app.post('/browse', (req, res) => {
     };
     console.log(`Proxying request to: ${targetUrl}`);
     proxy.web(req, res, options, (err) => {
-        console.error(`Error occurred while proxying request: ${err}`);
-        res.status(500).send('Error occurred while proxying request');
+        if (err) {
+            console.error(`Error occurred while proxying request: ${err}`);
+            res.status(500).send('Error occurred while proxying request');
+        }
     });
 });
 
+// Create and start the HTTP server
 const server = http.createServer(app);
 
 server.listen(3000, () => {
     console.log('Proxy server is running on http://localhost:3000');
 });
+
